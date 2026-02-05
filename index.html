@@ -19,23 +19,32 @@
 
     .card {
       background: white;
-      padding: 28px 22px;
+      padding: 26px 20px;
       border-radius: 22px;
       text-align: center;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
       width: min(92vw, 360px);
+      position: relative;
+      z-index: 2;
     }
 
     h1 {
       color: #ff4d6d;
-      margin: 0 0 12px;
+      margin: 0 0 10px;
       font-size: clamp(22px, 5vw, 28px);
     }
 
     p {
       color: #555;
-      margin: 0 0 22px;
+      margin: 0 0 16px;
       font-size: clamp(14px, 4vw, 16px);
+    }
+
+    .countdown {
+      font-weight: 600;
+      color: #ff4d6d;
+      margin-bottom: 14px;
+      font-size: 14px;
     }
 
     .buttons {
@@ -76,58 +85,77 @@
     .hint {
       font-size: 12px;
       opacity: 0.7;
-      margin-top: 10px;
-    }
-
-    .hearts {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-    }
-
-    .heart {
-      position: absolute;
-      color: #ff4d6d;
-      font-size: 20px;
-      animation: float 4s linear infinite;
-    }
-
-    @keyframes float {
-      from { transform: translateY(0) scale(1); opacity: 1; }
-      to { transform: translateY(-100svh) scale(1.5); opacity: 0; }
+      margin-top: 8px;
     }
 
     .tap-to-play {
-      margin-top: 10px;
+      margin-top: 8px;
       font-size: 12px;
       color: #777;
+    }
+
+    /* Floating photos */
+    .photo {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      border-radius: 16px;
+      object-fit: cover;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+      animation: floatPhoto 12s linear infinite;
+      z-index: 1;
+    }
+
+    @keyframes floatPhoto {
+      from { transform: translateY(100svh) rotate(0deg); opacity: 0; }
+      to { transform: translateY(-120svh) rotate(360deg); opacity: 1; }
+    }
+
+    /* Hearts */
+    .heart {
+      position: absolute;
+      pointer-events: none;
+      font-size: 18px;
+      animation: fade 1.2s ease-out forwards;
+    }
+
+    @keyframes fade {
+      from { opacity: 1; transform: scale(1); }
+      to { opacity: 0; transform: scale(1.8) translateY(-20px); }
     }
   </style>
 </head>
 <body>
+
   <div class="card" id="card">
-    <h1>💖 Will you be my Valentine, <span id="name">Alex</span>? 💖</h1>
+    <h1>💖 Will you be my Valentine, <span id="name">Unathi</span>? 💖</h1>
     <p>I was wondering if you'd make this Valentine's Day extra special.</p>
+
+    <div class="countdown" id="countdown"></div>
 
     <div class="buttons">
       <button class="yes" id="yesBtn">Yes 💕</button>
       <button class="no" id="noBtn">No 🙈</button>
     </div>
 
-    <div class="hint">(Psst… try clicking “No” 😈)</div>
+    <div class="hint">(You can try pressing “No” 😏)</div>
     <div class="tap-to-play" id="tapHint">Tap anywhere to start the music 🎵</div>
   </div>
 
-  <div class="hearts" id="hearts"></div>
+  <!-- Floating photos (replace with your own images) -->
+  <img src="photo1.jpg" class="photo" style="left:10%; animation-delay:0s;" />
+  <img src="photo2.jpg" class="photo" style="left:70%; animation-delay:4s;" />
 
-  <!-- Background music (replace song.mp3 with your own file) -->
+  <!-- Background music -->
   <audio id="music" loop>
     <source src="song.mp3" type="audio/mpeg" />
   </audio>
 
   <script>
-    // 👉 CHANGE THE NAME HERE
-    const valentineName = 'Unathi'; // <-- put their name
+    // SETTINGS
+    const valentineName = 'Unathi';
+    const valentinesDate = new Date('2026-02-14T00:00:00');
+
     document.getElementById('name').textContent = valentineName;
 
     const noBtn = document.getElementById('noBtn');
@@ -136,30 +164,41 @@
     const music = document.getElementById('music');
     const tapHint = document.getElementById('tapHint');
 
-    // Make the NO button impossible to click (mouse + touch)
+    // NO button dodge
     function dodge() {
       const maxX = card.clientWidth - noBtn.offsetWidth;
-      const maxY = 40; // keep it near buttons
       const x = Math.random() * maxX;
-      const y = Math.random() * maxY;
+      const y = Math.random() * 40;
       noBtn.style.transform = `translate(${x}px, ${y}px)`;
     }
 
     noBtn.addEventListener('mouseover', dodge);
-    noBtn.addEventListener('touchstart', (e) => { e.preventDefault(); dodge(); }, { passive: false });
+    noBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      fakeNoSuccess();
+    }, { passive: false });
 
-    // YES button action
+    // Fake NO success → switches to YES
+    function fakeNoSuccess() {
+      card.innerHTML = `
+        <h1>✅ Response recorded!</h1>
+        <p>You chose “No”…</p>
+        <p>Just kidding 😈</p>
+      `;
+      setTimeout(() => yesBtn.click(), 1500);
+    }
+
+    // YES action
     yesBtn.addEventListener('click', () => {
       card.innerHTML = `
         <h1>🥰 Yay, ${valentineName}! 🥰</h1>
         <p>You just made my day 💘</p>
-        <p>Happy Valentine's Day! 🌹</p>
+        <p>Looking forward to our Valentine's Day and Anniversary! 🌹</p>
       `;
-      spawnHearts();
       playMusic();
     });
 
-    // Mobile-friendly music start (autoplay-safe)
+    // Music start
     function playMusic() {
       music.play().catch(() => {});
       tapHint.style.display = 'none';
@@ -168,19 +207,38 @@
     document.body.addEventListener('click', playMusic, { once: true });
     document.body.addEventListener('touchstart', playMusic, { once: true });
 
-    function spawnHearts() {
-      const container = document.getElementById('hearts');
-      for (let i = 0; i < 36; i++) {
-        const heart = document.createElement('div');
-        heart.className = 'heart';
-        heart.textContent = '💖';
-        heart.style.left = Math.random() * 100 + 'vw';
-        heart.style.bottom = '-20px';
-        heart.style.animationDuration = 2 + Math.random() * 3 + 's';
-        container.appendChild(heart);
-        setTimeout(() => heart.remove(), 5000);
+    // Countdown timer
+    const countdownEl = document.getElementById('countdown');
+    setInterval(() => {
+      const now = new Date();
+      const diff = valentinesDate - now;
+      if (diff <= 0) {
+        countdownEl.textContent = '💘 It\'s Valentine\'s Day! 💘';
+        return;
       }
+      const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const m = Math.floor((diff / (1000 * 60)) % 60);
+      countdownEl.textContent = `⏳ ${d}d ${h}h ${m}m until Valentine’s Day`;
+    }, 1000);
+
+    // Hearts follow finger/mouse
+    function spawnHeart(x, y) {
+      const heart = document.createElement('div');
+      heart.className = 'heart';
+      heart.textContent = '💖';
+      heart.style.left = x + 'px';
+      heart.style.top = y + 'px';
+      document.body.appendChild(heart);
+      setTimeout(() => heart.remove(), 1200);
     }
+
+    document.addEventListener('mousemove', e => spawnHeart(e.clientX, e.clientY));
+    document.addEventListener('touchmove', e => {
+      const t = e.touches[0];
+      spawnHeart(t.clientX, t.clientY);
+    });
   </script>
 </body>
 </html>
+
